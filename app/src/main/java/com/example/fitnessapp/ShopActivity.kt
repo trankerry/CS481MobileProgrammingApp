@@ -59,6 +59,10 @@ class ShopActivity : AppCompatActivity() {
         setupUI()
         updateXPDisplay()
         showItems(currentCategory)
+
+        // Setup bottom navigation
+        val bottomNav = binding.root.findViewById<androidx.coordinatorlayout.widget.CoordinatorLayout>(R.id.bottomNav)
+        BottomNavHelper.setupBottomNav(this, bottomNav)
     }
 
     private fun setupUI() {

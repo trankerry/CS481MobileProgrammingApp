@@ -31,6 +31,10 @@ class PetActivity : AppCompatActivity() {
         loadPet()
         setupUI()
         updatePetDisplay()
+
+        // Setup bottom navigation - find the included layout
+        val bottomNav = findViewById<View>(R.id.bottomNav)
+        BottomNavHelper.setupBottomNav(this, bottomNav)
     }
 
     private fun loadPet() {

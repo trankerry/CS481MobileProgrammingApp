@@ -34,8 +34,8 @@ class WorkoutActivity : AppCompatActivity() {
         setupUI()
         updateStats()
 
-        // Setup bottom navigation
-        val bottomNav = binding.root.findViewById<androidx.coordinatorlayout.widget.CoordinatorLayout>(R.id.bottomNav)
+        // Setup bottom navigation - find the included layout
+        val bottomNav = findViewById<View>(R.id.bottomNav)
         BottomNavHelper.setupBottomNav(this, bottomNav)
     }
 

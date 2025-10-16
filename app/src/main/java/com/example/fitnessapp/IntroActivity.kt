@@ -14,10 +14,19 @@ class IntroActivity : AppCompatActivity() {
         binding = ActivityIntroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
+
         binding.startBtn.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            // Navigate to Sign Up page
+            startActivity(Intent(this, SignUpActivity::class.java))
         }
 
+        binding.signInBtn.setOnClickListener {
+            // Navigate to Sign In page
+            startActivity(Intent(this, SignInActivity::class.java))
+        }
     }
 }
