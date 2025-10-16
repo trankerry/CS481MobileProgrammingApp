@@ -12,6 +12,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FitnessApp">
         <activity
+            android:name=".ShopActivity"
+            android:exported="false" />
+        <activity
+            android:name=".PetActivity"
+            android:exported="false" />
+        <activity
+            android:name=".QuestsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WorkoutActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
         <activity

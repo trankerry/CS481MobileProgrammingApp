@@ -16,5 +16,9 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // Setup bottom navigation using the helper
+        val bottomNav = findViewById<androidx.coordinatorlayout.widget.CoordinatorLayout>(R.id.bottomNav)
+        BottomNavHelper.setupBottomNav(this, bottomNav)
     }
 }
