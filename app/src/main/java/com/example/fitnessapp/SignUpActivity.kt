@@ -1,11 +1,14 @@
 package com.example.fitnessapp
 
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import com.example.fitnessapp.databinding.ActivitySignupBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import android.view.WindowManager
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 class SignUpActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignupBinding
@@ -20,22 +23,10 @@ class SignUpActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
 
-        setupUI()
-    }
-
-    private fun setupUI() {
-        binding.createAccountBtn.setOnClickListener {
-            validateAndCreateAccount()
-        }
-
-        binding.backBtn.setOnClickListener {
-            finish()
-        }
-
+        binding.createAccountBtn.setOnClickListener { validateAndCreateAccount() }
+        binding.backBtn.setOnClickListener { finish() }
         binding.signInText.setOnClickListener {
-            // Navigate to Sign In
-            startActivity(Intent(this, SignInActivity::class.java))
-            finish()
+            startActivity(Intent(this, SignInActivity::class.java)); finish()
         }
     }
 
@@ -43,59 +34,48 @@ class SignUpActivity : AppCompatActivity() {
         val name = binding.nameInput.text.toString().trim()
         val email = binding.emailInput.text.toString().trim()
         val password = binding.passwordInput.text.toString()
-        val confirmPassword = binding.confirmPasswordInput.text.toString()
+        val confirm = binding.confirmPasswordInput.text.toString()
 
-        // Validation
         when {
-            name.isEmpty() -> {
-                binding.nameInput.error = "Please enter your name"
-                binding.nameInput.requestFocus()
-                return
-            }
-            email.isEmpty() -> {
-                binding.emailInput.error = "Please enter your email"
-                binding.emailInput.requestFocus()
-                return
-            }
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                binding.emailInput.error = "Please enter a valid email"
-                binding.emailInput.requestFocus()
-                return
-            }
-            password.isEmpty() -> {
-                binding.passwordInput.error = "Please enter a password"
-                binding.passwordInput.requestFocus()
-                return
-            }
-            password.length < 6 -> {
-                binding.passwordInput.error = "Password must be at least 6 characters"
-                binding.passwordInput.requestFocus()
-                return
-            }
-            password != confirmPassword -> {
-                binding.confirmPasswordInput.error = "Passwords don't match"
-                binding.confirmPasswordInput.requestFocus()
-                return
-            }
+            name.isEmpty() -> { binding.nameInput.error = "Enter your name"; binding.nameInput.requestFocus(); return }
+            email.isEmpty() -> { binding.emailInput.error = "Enter your email"; binding.emailInput.requestFocus(); return }
+            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> { binding.emailInput.error = "Enter a valid email"; binding.emailInput.requestFocus(); return }
+            password.length < 6 -> { binding.passwordInput.error = "Min 6 characters"; binding.passwordInput.requestFocus(); return }
+            password != confirm -> { binding.confirmPasswordInput.error = "Passwords don't match"; binding.confirmPasswordInput.requestFocus(); return }
         }
 
-        // Account created successfully
-        // In a real app, you'd save this to SharedPreferences or database
-        showSuccessDialog(name)
-    }
+        binding.createAccountBtn.isEnabled = false
 
-    private fun showSuccessDialog(name: String) {
-        MaterialAlertDialogBuilder(this)
-            .setTitle("🎉 Welcome to the Team!")
-            .setMessage("Your account has been created, $name!\n\nYou're now ready to start your fitness journey and level up!")
-            .setPositiveButton("Let's Go!") { _, _ ->
-                // Navigate to MainActivity
-                val intent = Intent(this, MainActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                finish()
+        Firebase.auth.createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                val uid = Firebase.auth.currentUser!!.uid
+                val profile = mapOf(
+                    "name" to name,
+                    "email" to email,
+                    "createdAt" to System.currentTimeMillis(),
+                    "xp" to 0, "streak" to 0,
+                    "pet" to mapOf("name" to "Buddy", "level" to 1, "currentXP" to 0,
+                        "xpToNextLevel" to 100, "evolutionStage" to 0,
+                        "happiness" to 80, "energy" to 75)
+                )
+                Firebase.firestore.collection("users").document(uid).set(profile)
+                    .addOnSuccessListener {
+                        startActivity(Intent(this, MainActivity::class.java)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+                        finish()
+                    }
+                    .addOnFailureListener { e ->
+                        binding.createAccountBtn.isEnabled = true
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle("Profile save failed")
+                            .setMessage(e.localizedMessage ?: "Unknown error").setPositiveButton("OK", null).show()
+                    }
             }
-            .setCancelable(false)
-            .show()
+            .addOnFailureListener { e ->
+                binding.createAccountBtn.isEnabled = true
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Sign up failed")
+                    .setMessage(e.localizedMessage ?: "Unknown error").setPositiveButton("OK", null).show()
+            }
     }
 }
