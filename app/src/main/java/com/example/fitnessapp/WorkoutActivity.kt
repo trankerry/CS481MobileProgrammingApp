@@ -10,6 +10,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.RadioButton
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 
 data class Exercise(
     val name: String,
@@ -25,6 +27,48 @@ class WorkoutActivity : AppCompatActivity() {
     private lateinit var binding: ActivityWorkoutBinding
     private val exercises = mutableListOf<Exercise>()
     private var currentMode = "strength" // "strength" or "cardio"
+
+    // List of common strength exercises for autocomplete
+    private val strengthExercises = listOf(
+        "Barbell Bench Press",
+        "Barbell Squat",
+        "Barbell Deadlift",
+        "Barbell Row",
+        "Barbell Overhead Press",
+        "Barbell Curl",
+        "Dumbbell Bench Press",
+        "Dumbbell Squat",
+        "Dumbbell Press",
+        "Dumbbell Row",
+        "Dumbbell Curl",
+        "Dumbbell Bicep Curl",
+        "Dumbbell Tricep Extension",
+        "Dumbbell Shoulder Press",
+        "Dumbbell Lateral Raise",
+        "Dumbbell Fly",
+        "Dumbbell Lunge",
+        "Pull-ups",
+        "Push-ups",
+        "Chin-ups",
+        "Dips",
+        "Plank",
+        "Leg Press",
+        "Leg Extension",
+        "Leg Curl",
+        "Calf Raise",
+        "Lat Pulldown",
+        "Cable Fly",
+        "Cable Row",
+        "Cable Curl",
+        "Tricep Pushdown",
+        "Face Pull",
+        "Hammer Curl",
+        "Skull Crusher",
+        "Russian Twist",
+        "Sit-ups",
+        "Crunches",
+        "Hanging Leg Raise"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,10 +116,14 @@ class WorkoutActivity : AppCompatActivity() {
 
     private fun showAddStrengthDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_strength, null)
-        val nameInput = dialogView.findViewById<EditText>(R.id.exerciseNameInput)
+        val nameInput = dialogView.findViewById<AutoCompleteTextView>(R.id.exerciseNameInput)
         val setsInput = dialogView.findViewById<EditText>(R.id.setsInput)
         val repsInput = dialogView.findViewById<EditText>(R.id.repsInput)
         val weightInput = dialogView.findViewById<EditText>(R.id.weightInput)
+
+        // Set up autocomplete adapter
+        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, strengthExercises)
+        nameInput.setAdapter(adapter)
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Add Strength Exercise")
