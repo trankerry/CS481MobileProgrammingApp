@@ -106,7 +106,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     app:tint="@color/white"
-                    app:srcCompat="@drawable/btn_3" />
+                    app:srcCompat="@drawable/search" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -132,7 +132,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     app:tint="@color/white"
-                    app:srcCompat="@drawable/search" />
+                    app:srcCompat="@drawable/btn_3" />
 
                 <TextView
                     android:layout_width="match_parent"

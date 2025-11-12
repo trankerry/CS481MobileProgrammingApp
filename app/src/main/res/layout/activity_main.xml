@@ -74,18 +74,18 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
                     android:orientation="vertical"
-                    android:padding="24dp"
-                    android:gravity="center">
+                    android:padding="24dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:alpha="0.7"
                         android:text="CURRENT LEVEL"
                         android:textColor="@color/white"
                         android:textSize="12sp"
-                        android:textStyle="bold"
-                        android:alpha="0.7" />
+                        android:textStyle="bold" />
 
                     <TextView
                         android:id="@+id/levelText"
@@ -111,8 +111,8 @@
                         android:layout_marginTop="24dp"
                         android:max="100"
                         android:progress="65"
-                        android:progressTint="#FF6B35"
-                        android:progressBackgroundTint="#333333" />
+                        android:progressBackgroundTint="#333333"
+                        android:progressTint="#FF6B35" />
 
                     <TextView
                         android:id="@+id/xpProgressText"
