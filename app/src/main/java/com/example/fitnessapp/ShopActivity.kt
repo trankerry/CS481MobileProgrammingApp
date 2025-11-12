@@ -1,8 +1,8 @@
 package com.example.fitnessapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import com.example.fitnessapp.databinding.ActivityShopBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayout
@@ -12,21 +12,24 @@ data class ShopItem(
     val name: String,
     val description: String,
     val price: Int,
-    val category: String, // "cosmetic", "powerup", "pet"
+    val category: String,
     val emoji: String,
+    val themeId: String? = null, // For cosmetic themes
     var isPurchased: Boolean = false
 )
 
-class ShopActivity : AppCompatActivity() {
+class ShopActivity : ThemedActivity() {
     private lateinit var binding: ActivityShopBinding
-    private var currentXP = 2500 // User's current XP (would load from prefs)
+    private var currentXP = 2500
     private val purchasedItems = mutableSetOf<Int>()
 
     private val allItems = listOf(
-        // Cosmetics
-        ShopItem(1, "Golden Theme", "Unlock golden UI theme", 500, "cosmetic", "✨"),
-        ShopItem(2, "Dark Purple Theme", "Sleek purple color scheme", 400, "cosmetic", "💜"),
-        ShopItem(3, "Neon Theme", "Cyberpunk neon aesthetics", 600, "cosmetic", "🌃"),
+        // Cosmetics - Themes
+        ShopItem(1, "Golden Theme", "Unlock golden UI theme", 500, "cosmetic", "✨", "golden"),
+        ShopItem(2, "Dark Purple Theme", "Sleek purple color scheme", 400, "cosmetic", "💜", "purple"),
+        ShopItem(3, "Neon Theme", "Cyberpunk neon aesthetics", 600, "cosmetic", "🌃", "neon"),
+
+        // Other Cosmetics
         ShopItem(4, "Profile Frame: Fire", "Legendary fire border", 800, "cosmetic", "🔥"),
         ShopItem(5, "Profile Frame: Ice", "Cool ice border", 800, "cosmetic", "❄️"),
         ShopItem(6, "Title: Warrior", "Display 'Fitness Warrior' title", 300, "cosmetic", "⚔️"),
@@ -56,17 +59,45 @@ class ShopActivity : AppCompatActivity() {
         binding = ActivityShopBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        loadPurchasedItems()
         setupUI()
         updateXPDisplay()
         showItems(currentCategory)
+        applyTheme()
 
-        // Setup bottom navigation
         val bottomNav = binding.root.findViewById<androidx.coordinatorlayout.widget.CoordinatorLayout>(R.id.bottomNav)
         BottomNavHelper.setupBottomNav(this, bottomNav)
     }
 
+    private fun loadPurchasedItems() {
+        val prefs = getSharedPreferences("shop_prefs", MODE_PRIVATE)
+
+        // Load purchased item IDs
+        allItems.forEach { item ->
+            if (prefs.getBoolean("item_${item.id}", false)) {
+                purchasedItems.add(item.id)
+            }
+        }
+
+        // Load XP
+        currentXP = prefs.getInt("user_xp", 2500)
+    }
+
+    private fun savePurchase(item: ShopItem) {
+        val prefs = getSharedPreferences("shop_prefs", MODE_PRIVATE)
+        prefs.edit().apply {
+            putBoolean("item_${item.id}", true)
+            putInt("user_xp", currentXP)
+
+            // If it's a theme, mark it as unlocked
+            if (item.themeId != null) {
+                putBoolean("theme_${item.themeId}", true)
+            }
+            apply()
+        }
+    }
+
     private fun setupUI() {
-        // Tab selection
         binding.shopTabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 currentCategory = when (tab?.position) {
@@ -89,7 +120,6 @@ class ShopActivity : AppCompatActivity() {
 
     private fun showItems(category: String) {
         binding.shopItemsContainer.removeAllViews()
-
         val items = allItems.filter { it.category == category }
 
         items.forEach { item ->
@@ -101,6 +131,7 @@ class ShopActivity : AppCompatActivity() {
             val priceText = itemView.findViewById<android.widget.TextView>(R.id.itemPrice)
             val buyBtn = itemView.findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.buyBtn)
             val ownedBadge = itemView.findViewById<android.widget.TextView>(R.id.ownedBadge)
+            val activeBtn = itemView.findViewById<androidx.appcompat.widget.AppCompatButton>(R.id.activeBtn)
 
             emojiText.text = item.emoji
             nameText.text = item.name
@@ -110,11 +141,26 @@ class ShopActivity : AppCompatActivity() {
             if (purchasedItems.contains(item.id)) {
                 buyBtn.visibility = View.GONE
                 ownedBadge.visibility = View.VISIBLE
+
+                // Show "Active" button for themes
+                if (item.themeId != null) {
+                    activeBtn.visibility = View.VISIBLE
+                    val isActive = ThemeManager.getCurrentTheme().id == item.themeId
+                    activeBtn.text = if (isActive) "✓ ACTIVE" else "ACTIVATE"
+                    activeBtn.isEnabled = !isActive
+                    activeBtn.alpha = if (isActive) 0.6f else 1.0f
+
+                    activeBtn.setOnClickListener {
+                        activateTheme(item)
+                    }
+                } else {
+                    activeBtn.visibility = View.GONE
+                }
             } else {
                 buyBtn.visibility = View.VISIBLE
                 ownedBadge.visibility = View.GONE
+                activeBtn.visibility = View.GONE
 
-                // Check if user can afford
                 if (currentXP >= item.price) {
                     buyBtn.isEnabled = true
                     buyBtn.alpha = 1.0f
@@ -132,6 +178,22 @@ class ShopActivity : AppCompatActivity() {
         }
     }
 
+    private fun activateTheme(item: ShopItem) {
+        if (item.themeId == null) return
+
+        ThemeManager.setThemeById(item.themeId)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("${item.emoji} Theme Activated!")
+            .setMessage("${item.name} is now active!\n\nRestarting to apply changes...")
+            .setPositiveButton("OK") { _, _ ->
+                // Recreate activity to apply theme
+                recreate()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
     private fun showPurchaseDialog(item: ShopItem) {
         if (currentXP < item.price) {
             MaterialAlertDialogBuilder(this)
@@ -142,9 +204,15 @@ class ShopActivity : AppCompatActivity() {
             return
         }
 
+        val message = if (item.themeId != null) {
+            "${item.description}\n\nYou can activate this theme anytime from the shop after purchase!\n\nPrice: ${item.price} XP\nYour Balance: $currentXP XP\nAfter Purchase: ${currentXP - item.price} XP"
+        } else {
+            "${item.description}\n\nPrice: ${item.price} XP\nYour Balance: $currentXP XP\nAfter Purchase: ${currentXP - item.price} XP"
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle("${item.emoji} Purchase ${item.name}?")
-            .setMessage("${item.description}\n\nPrice: ${item.price} XP\nYour Balance: $currentXP XP\nAfter Purchase: ${currentXP - item.price} XP")
+            .setMessage(message)
             .setPositiveButton("Buy") { _, _ ->
                 purchaseItem(item)
             }
@@ -155,13 +223,19 @@ class ShopActivity : AppCompatActivity() {
     private fun purchaseItem(item: ShopItem) {
         currentXP -= item.price
         purchasedItems.add(item.id)
-
+        savePurchase(item)
         updateXPDisplay()
         showItems(currentCategory)
 
+        val message = if (item.themeId != null) {
+            "You bought ${item.name}!\n\nTap 'ACTIVATE' to apply this theme to your app!"
+        } else {
+            "You bought ${item.name}!\n\nCheck your profile to equip and use your new item."
+        }
+
         MaterialAlertDialogBuilder(this)
             .setTitle("${item.emoji} Purchase Complete!")
-            .setMessage("You bought ${item.name}!\n\nCheck your profile to equip and use your new item.")
+            .setMessage(message)
             .setPositiveButton("Awesome!", null)
             .show()
     }

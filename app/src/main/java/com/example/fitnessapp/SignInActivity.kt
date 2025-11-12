@@ -1,4 +1,3 @@
-
 package com.example.fitnessapp
 
 import android.content.Intent
@@ -45,11 +44,16 @@ class SignInActivity : AppCompatActivity() {
 
         Firebase.auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-                startActivity(
-                    Intent(this, MainActivity::class.java)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                )
-                finish()
+                // Initialize UserManager and load user data
+                UserManager.init(this)
+                UserManager.loadUserDataFromFirestore(this) { success ->
+                    // Navigate to main activity even if loading fails (will use cached data)
+                    startActivity(
+                        Intent(this, MainActivity::class.java)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    )
+                    finish()
+                }
             }
             .addOnFailureListener { e ->
                 binding.signInBtn.isEnabled = true

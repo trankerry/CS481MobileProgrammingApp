@@ -53,13 +53,38 @@ class SignUpActivity : AppCompatActivity() {
                     "name" to name,
                     "email" to email,
                     "createdAt" to System.currentTimeMillis(),
-                    "xp" to 0, "streak" to 0,
-                    "pet" to mapOf("name" to "Buddy", "level" to 1, "currentXP" to 0,
-                        "xpToNextLevel" to 100, "evolutionStage" to 0,
-                        "happiness" to 80, "energy" to 75)
+                    "level" to 1,
+                    "xp" to 0,
+                    "strength" to 10,
+                    "agility" to 10,
+                    "stamina" to 10,
+                    "streak" to 0,
+                    "pet" to mapOf(
+                        "name" to "Buddy",
+                        "level" to 1,
+                        "currentXP" to 0,
+                        "xpToNextLevel" to 100,
+                        "evolutionStage" to 0,
+                        "happiness" to 80,
+                        "energy" to 75
+                    )
                 )
+
                 Firebase.firestore.collection("users").document(uid).set(profile)
                     .addOnSuccessListener {
+                        // Initialize UserManager and save profile locally
+                        UserManager.init(this)
+                        UserManager.saveUserProfile(
+                            name = name,
+                            email = email,
+                            level = 1,
+                            xp = 0,
+                            strength = 10,
+                            agility = 10,
+                            stamina = 10
+                        )
+
+                        // Navigate to main activity
                         startActivity(Intent(this, MainActivity::class.java)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
                         finish()
@@ -68,14 +93,18 @@ class SignUpActivity : AppCompatActivity() {
                         binding.createAccountBtn.isEnabled = true
                         MaterialAlertDialogBuilder(this)
                             .setTitle("Profile save failed")
-                            .setMessage(e.localizedMessage ?: "Unknown error").setPositiveButton("OK", null).show()
+                            .setMessage(e.localizedMessage ?: "Unknown error")
+                            .setPositiveButton("OK", null)
+                            .show()
                     }
             }
             .addOnFailureListener { e ->
                 binding.createAccountBtn.isEnabled = true
                 MaterialAlertDialogBuilder(this)
                     .setTitle("Sign up failed")
-                    .setMessage(e.localizedMessage ?: "Unknown error").setPositiveButton("OK", null).show()
+                    .setMessage(e.localizedMessage ?: "Unknown error")
+                    .setPositiveButton("OK", null)
+                    .show()
             }
     }
 }
