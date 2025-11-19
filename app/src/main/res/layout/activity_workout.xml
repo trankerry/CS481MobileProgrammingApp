@@ -72,6 +72,18 @@
                     android:alpha="0.5" />
             </LinearLayout>
 
+            <!-- Outdoor Activity Button -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/outdoorActivityBtn"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/orange_bg"
+                android:text="📍 START OUTDOOR ACTIVITY"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
             <!-- Session Stats -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"

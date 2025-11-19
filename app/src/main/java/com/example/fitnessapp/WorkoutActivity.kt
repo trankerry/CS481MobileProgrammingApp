@@ -1,17 +1,13 @@
 package com.example.fitnessapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.fitnessapp.databinding.ActivityWorkoutBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.RadioGroup
-import android.widget.RadioButton
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 
 data class Exercise(
     val name: String,
@@ -28,47 +24,28 @@ class WorkoutActivity : AppCompatActivity() {
     private val exercises = mutableListOf<Exercise>()
     private var currentMode = "strength" // "strength" or "cardio"
 
-    // List of common strength exercises for autocomplete
-    private val strengthExercises = listOf(
-        "Barbell Bench Press",
-        "Barbell Squat",
-        "Barbell Deadlift",
-        "Barbell Row",
-        "Barbell Overhead Press",
-        "Barbell Curl",
-        "Dumbbell Bench Press",
-        "Dumbbell Squat",
-        "Dumbbell Press",
-        "Dumbbell Row",
-        "Dumbbell Curl",
-        "Dumbbell Bicep Curl",
-        "Dumbbell Tricep Extension",
-        "Dumbbell Shoulder Press",
-        "Dumbbell Lateral Raise",
-        "Dumbbell Fly",
-        "Dumbbell Lunge",
-        "Pull-ups",
-        "Push-ups",
-        "Chin-ups",
-        "Dips",
-        "Plank",
-        "Leg Press",
-        "Leg Extension",
-        "Leg Curl",
-        "Calf Raise",
-        "Lat Pulldown",
-        "Cable Fly",
-        "Cable Row",
-        "Cable Curl",
-        "Tricep Pushdown",
-        "Face Pull",
-        "Hammer Curl",
-        "Skull Crusher",
-        "Russian Twist",
-        "Sit-ups",
-        "Crunches",
-        "Hanging Leg Raise"
-    )
+    // Activity result launcher for outdoor tracking
+    private val outdoorActivityLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK && result.data != null) {
+            val data = result.data!!
+            val activityType = data.getStringExtra("activity_type") ?: "Running"
+            val duration = data.getIntExtra("duration", 0)
+            val distance = data.getDoubleExtra("distance", 0.0)
+
+            // Add outdoor activity as cardio exercise
+            val exercise = Exercise(
+                name = "$activityType (Outdoor)",
+                type = "cardio",
+                duration = duration,
+                distance = distance
+            )
+            exercises.add(exercise)
+            updateExerciseList()
+            updateStats()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,6 +76,12 @@ class WorkoutActivity : AppCompatActivity() {
             binding.addExerciseBtn.text = "Add Cardio Session"
         }
 
+        // Outdoor activity button
+        binding.outdoorActivityBtn.setOnClickListener {
+            android.util.Log.d("WorkoutActivity", "Outdoor activity button clicked")
+            showOutdoorActivityDialog()
+        }
+
         // Add exercise button
         binding.addExerciseBtn.setOnClickListener {
             if (currentMode == "strength") {
@@ -116,14 +99,10 @@ class WorkoutActivity : AppCompatActivity() {
 
     private fun showAddStrengthDialog() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_add_strength, null)
-        val nameInput = dialogView.findViewById<AutoCompleteTextView>(R.id.exerciseNameInput)
+        val nameInput = dialogView.findViewById<EditText>(R.id.exerciseNameInput)
         val setsInput = dialogView.findViewById<EditText>(R.id.setsInput)
         val repsInput = dialogView.findViewById<EditText>(R.id.repsInput)
         val weightInput = dialogView.findViewById<EditText>(R.id.weightInput)
-
-        // Set up autocomplete adapter
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, strengthExercises)
-        nameInput.setAdapter(adapter)
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Add Strength Exercise")
@@ -227,5 +206,24 @@ class WorkoutActivity : AppCompatActivity() {
                 finish()
             }
             .show()
+    }
+
+    private fun showOutdoorActivityDialog() {
+        val activities = arrayOf("Running", "Cycling", "Walking")
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Select Outdoor Activity")
+            .setItems(activities) { _, which ->
+                val selectedActivity = activities[which]
+                startOutdoorTracking(selectedActivity)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun startOutdoorTracking(activityType: String) {
+        val intent = Intent(this, OutdoorTrackingActivity::class.java)
+        intent.putExtra("ACTIVITY_TYPE", activityType)
+        outdoorActivityLauncher.launch(intent)
     }
 }
